@@ -36,7 +36,7 @@ class Encoder(nn.Modele):
             nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         )
         # building a ResNet-18 here
-        self.layer1 = self._make_layer(planes=64, n_blocks=2) # a downsample layer is included in the first block
+        self.layer1 = self._make_layer(planes=64, n_blocks=2) # no downsample layer in the first block
         self.layer2 = self._make_layer(planes=128, n_blocks=2, stride=2)
         self.layer3 = self._make_layer(planes=256, n_blocks=2, stride=2)
         self.layer4 = self._make_layer(planes=512, n_blocks=2, stride=2)
@@ -54,9 +54,9 @@ class Encoder(nn.Modele):
     def _make_layer(self, planes, n_blocks=1, stride=1):
         assert n_blocks > 0, "n_blocks must be greater than 0" 
         downsample = None
-        if stride != 1 or self.in_places != planes * ResNetBlock.expansion:
+        if stride != 1 or self.in_planes != planes * ResNetBlock.expansion:
             downsample = nn.Sequential(
-                nn.Conv2d(self.in_places, planes * ResNetBlock.expansion, kernel_size=1, stride=stride, bias=False),
+                nn.Conv2d(self.in_planes, planes * ResNetBlock.expansion, kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(planes * ResNetBlock.expansion, momentum=BN_MOMENTUM),
             )
 
@@ -67,10 +67,10 @@ class Encoder(nn.Modele):
         return nn.Sequential(*layers)
 
 
-
 class FCNBottleNeck(nn.Module):
     def __init__(self, d, planes=512):
-        # an fully convolutional hour glass network converging to a 1x1xd feature map and back. d is the design parameter here 
+        # an fully convolutional hour glass network converging to a 1x1xd feature map and back.
+        # d is the design parameter here 
         super(FCNBottleNeck, self).__init__()
         self.d = d
         self.planes = planes
@@ -82,3 +82,15 @@ class FCNBottleNeck(nn.Module):
     
     def forward(self, x):
         pass
+
+
+class Decoder(nn.Module):
+    def __init__(self):
+        self.layer4 = self._make_deconv_layer(512)
+        self.layer3 = self._make_deconv_layer(256)
+        self.layer2 = self._make_deconv_layer(128)
+        self.layer1 = self._make_deconv_layer(64)
+        self.layer0 = self._make_deconv_layer(3)
+
+    def _make_deconv_layer(self, planes):
+
