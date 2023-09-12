@@ -6,9 +6,10 @@ from pathlib import Path
 from torch.utils.tensorboard import SummaryWriter
 
 from autoencoder_model import Autoencoder
-from dataset import ImageDataset
+from dataset import ImageDataset, data_transforms
 
 SAVE_ROOT = Path("./checkpoints")
+
 
 def main(args):
 
@@ -16,6 +17,7 @@ def main(args):
 
     # make a model
     model = Autoencoder(bottlencek_dim=128)
+    model.to(device=device)
 
     # make a loss function
     loss_func = nn.MSELoss()
@@ -25,7 +27,7 @@ def main(args):
     workers = 4
 
     # make a dataloader
-    train_dataset = ImageDataset(args.data_dir) 
+    train_dataset = ImageDataset(args.data_dir, transform=data_transforms) 
     train_loader = torch.utils.data.DataLoader(train_dataset,
                                                batch_size=batch_size,
                                                shuffle=True,

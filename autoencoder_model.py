@@ -3,7 +3,7 @@ import torch.nn as nn
 
 class Encoder(nn.Module):
     def __init__(self, bottlencek_dim=32):
-
+        super(Encoder, self).__init__()
         self.model = nn.Sequential(
             nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1), # conv 0
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
@@ -33,6 +33,7 @@ class Encoder(nn.Module):
 
 class Decoder(nn.Module):
     def __init__(self, bottlencek_dim=32):
+        super(Decoder, self).__init__()
         self.model = nn.Sequential(
             nn.ConvTranspose2d(bottlencek_dim, 32, kernel_size=8, stride=1, padding=0), # conv 9d
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
@@ -61,6 +62,7 @@ class Decoder(nn.Module):
 
 class Autoencoder(nn.Module):
     def __init__(self, bottlencek_dim=32):
+        super(Autoencoder, self).__init__()
         self.encoder = Encoder(bottlencek_dim=bottlencek_dim)
         self.decoder = Decoder(bottlencek_dim=bottlencek_dim)
 
