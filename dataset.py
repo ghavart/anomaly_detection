@@ -7,11 +7,10 @@ from torchvision import transforms
 
 class ImageDataset(torch.utils.data.Dataset):
 
-    def __init__(self, image_dir, out_size=128, transform=None): 
+    def __init__(self, image_dir, transform=None): 
         super(ImageDataset, self).__init__()
         self.image_dir = image_dir
-        self.out_size = out_size
-        self.image_files = sorted([f for f in os.listdir(image_dir) if f.endswith('.jpg')])
+        self.image_files = sorted([f for f in os.listdir(image_dir) if f.endswith('.png')])
         self.transform = transform
 
     def __len__(self):
@@ -22,6 +21,8 @@ class ImageDataset(torch.utils.data.Dataset):
         img_path = os.path.join(self.image_dir, img_name)
 
         img = Image.open(img_path)
+        if img.size != (128, 128):
+            import pdb; pdb.set_trace()
         if self.transform:
             img = self.transform(img)
 
@@ -29,9 +30,10 @@ class ImageDataset(torch.utils.data.Dataset):
     
 
 data_transforms = transforms.Compose([
-    transforms.RandomCrop(128),
     transforms.RandomHorizontalFlip(),
     transforms.RandomVerticalFlip(),
+    transforms.ColorJitter(brightness=0.1),
     transforms.ToTensor(),
-    transforms.Normalize([0.485, 0.456, 0.406], [0.229,0.224,0.225])
+    # transforms.Normalize([0.485, 0.456, 0.406], [0.229,0.224,0.225])
+    transforms.Normalize([0.5], [0.5])
 ])

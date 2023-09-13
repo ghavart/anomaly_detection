@@ -2,6 +2,7 @@ import torch
 import torch.nn as nn
 import argparse
 from pathlib import Path
+from tqdm import tqdm
 
 from torch.utils.tensorboard import SummaryWriter
 
@@ -9,7 +10,7 @@ from autoencoder_model import Autoencoder
 from dataset import ImageDataset, data_transforms
 
 SAVE_ROOT = Path("./checkpoints")
-
+SAVE_ROOT.mkdir(exist_ok=True, parents=True)
 
 def main(args):
 
@@ -23,8 +24,8 @@ def main(args):
     loss_func = nn.MSELoss()
     optimizer = torch.optim.Adam(model.parameters(), lr=2e-4, weight_decay=1e-5)
 
-    batch_size = 32
-    workers = 4
+    batch_size = 2048 
+    workers = 16 
 
     # make a dataloader
     train_dataset = ImageDataset(args.data_dir, transform=data_transforms) 
@@ -33,19 +34,19 @@ def main(args):
                                                shuffle=True,
                                                num_workers=workers,
                                                pin_memory=True)
-    # tain the model with evaluation on the validation set
 
     # make a tensorboard writer
     tsb_writer = SummaryWriter('./tensorboard')
 
-    epochs = 10
-    save_interval = 2
+    epochs = 100
+    save_interval = 10 
 
+    # train the model
     for epoch in range(epochs):
         model.train()
         running_loss = 0.0
 
-        for i, batch in enumerate(train_loader):
+        for batch in tqdm(train_loader):
             target_batch = batch.to(device=device)
             recon_batch = model(target_batch)
             loss = loss_func(recon_batch, target_batch)
@@ -67,6 +68,6 @@ def main(args):
 
 if __name__ == "__main__":
     argparser = argparse.ArgumentParser()
-    argparser.add_argument('--data_dir', type=str, default='/mnt/data/coco/images/train2017')
+    argparser.add_argument('--data_dir', type=str, default='/home/art/data_tmp/anomaly_detection/split_128')
     args = argparser.parse_args() 
     main(args)
