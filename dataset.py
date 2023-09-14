@@ -19,10 +19,7 @@ class ImageDataset(torch.utils.data.Dataset):
     def __getitem__(self, idx):
         img_name = self.image_files[idx]
         img_path = os.path.join(self.image_dir, img_name)
-
         img = Image.open(img_path)
-        if img.size != (128, 128):
-            import pdb; pdb.set_trace()
         if self.transform:
             img = self.transform(img)
 

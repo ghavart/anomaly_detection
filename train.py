@@ -47,7 +47,6 @@ def main(args):
         running_loss = 0.0
 
         for batch in tqdm(train_loader):
-            import pdb; pdb.set_trace()
             target_batch = batch.to(device=device)
             recon_batch = model(target_batch)
             loss = loss_func(recon_batch, target_batch)

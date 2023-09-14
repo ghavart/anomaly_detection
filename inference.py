@@ -92,29 +92,35 @@ def process_image(model, orig_img, args) -> np.ndarray:
     end = time.time()
     print(f"Processing elapsed time: {end - start:.2f} seconds / frame")
 
+    # plot the results
+    err_map *= 255.0
+    err_map = err_map.astype(np.uint8)
+
     fig, ax = plt.subplots(2, figsize=(16, 9))
     ax[0].imshow(orig_img, cmap='gray') 
-    ax[1].imshow(err_map * 255)
+    ax[1].imshow(err_map)
     plt.show()
-    # import pdb; pdb.set_trace()
-    
+
+    return err_map 
+
 
 def main(args):
 
     # load the model
-
     model = Autoencoder(bottlencek_dim=64)
     model.load_state_dict(torch.load(args.model_path))
     model.to(device=DEVICE)
 
     img_dir = Path(args.img_dir)
     for img_path in img_dir.glob("*.png"):
-        print(img_path)
-        img_path = "/mnt/data/anomaly_detection/drone_flights/test/0596.png"
         img = np.array(Image.open(img_path))
-        img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) # to grayscale
+        gr_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) # to grayscale
 
-        err_map = process_image(model, img, args)
+        err_map = process_image(model, gr_img, args)
+        
+        # save the input and the result
+        Image.fromarray(img).save("orig.png")
+        Image.fromarray(err_map).save("err.png")
         break # NOMERGE
 
 
@@ -123,8 +129,8 @@ if __name__ == "__main__":
     parser.add_argument("--img_dir", type=str, default="/mnt/data/anomaly_detection/drone_flights/test")
     parser.add_argument("--model_path", type=str, default="/home/art/code/anomaly_detection/checkpoints/model_10.pth") 
     parser.add_argument("--size", type=int, default=128)
-    parser.add_argument("--stride", type=int, default=30)
-    parser.add_argument("--err_threshold", type=float, default=0.85)
+    parser.add_argument("--stride", type=int, default=64)
+    parser.add_argument("--err_threshold", type=float, default=0.8)
     args = parser.parse_args()
 
     main(args)
