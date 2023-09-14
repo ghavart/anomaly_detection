@@ -17,7 +17,7 @@ def main(args):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
     # make a model
-    model = Autoencoder(bottlencek_dim=128)
+    model = Autoencoder(bottlencek_dim=64)
     model.to(device=device)
 
     # make a loss function
@@ -25,7 +25,7 @@ def main(args):
     optimizer = torch.optim.Adam(model.parameters(), lr=2e-4, weight_decay=1e-5)
 
     batch_size = 2048 
-    workers = 16 
+    workers = 10 
 
     # make a dataloader
     train_dataset = ImageDataset(args.data_dir, transform=data_transforms) 
@@ -47,6 +47,7 @@ def main(args):
         running_loss = 0.0
 
         for batch in tqdm(train_loader):
+            import pdb; pdb.set_trace()
             target_batch = batch.to(device=device)
             recon_batch = model(target_batch)
             loss = loss_func(recon_batch, target_batch)
