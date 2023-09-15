@@ -8,8 +8,9 @@ from PIL import Image
 import matplotlib.pyplot as plt
 
 from torchvision import transforms
-
 from autoencoder_model import Autoencoder
+
+SAVE_DIR = Path("./results")
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
@@ -40,7 +41,7 @@ def __batch_process(model, patches, boxes, err_map, count_map):
     return err_map, count_map
 
 
-def process_image(model, orig_img, args) -> np.ndarray:
+def process_image(model, rgb_img, args) -> np.ndarray:
 
     size = args.size
     stride = args.stride
@@ -48,12 +49,17 @@ def process_image(model, orig_img, args) -> np.ndarray:
     batch_size = 2048
 
     start = time.time()
+    
+    # to grayscale
+    gray_img = cv2.cvtColor(rgb_img, cv2.COLOR_RGB2GRAY)
+    
     # pad the image so that it is divisible by the stride
-    h, w = orig_img.shape[:2]
+    h, w = gray_img.shape[:2]
     pad_h = stride - (h - size) % stride 
     pad_w = stride - (w - size) % stride 
-    img = np.pad(orig_img, ((0, pad_h), (0, pad_w)), mode='constant', constant_values=0)
+    img = np.pad(gray_img, ((0, pad_h), (0, pad_w)), mode='constant', constant_values=0)
 
+    # prepare the processing variables 
     err_map = np.zeros_like(img, dtype=np.float32)
     count_map = np.zeros_like(img, dtype=np.int32)
     patches = []
@@ -90,21 +96,28 @@ def process_image(model, orig_img, args) -> np.ndarray:
     err_map[err_map >= err_threshold] = 1
 
     end = time.time()
-    print(f"Processing elapsed time: {end - start:.2f} seconds / frame")
+    print(f"Processing elapsed time: {end - start:.3f} seconds / frame")
 
-    # plot the results
+    # draw contours on the original image
     err_map *= 255.0
     err_map = err_map.astype(np.uint8)
-
-    fig, ax = plt.subplots(2, figsize=(16, 9))
-    ax[0].imshow(orig_img, cmap='gray') 
-    ax[1].imshow(err_map)
-    plt.show()
-
-    return err_map 
+    contours, hierarchy = cv2.findContours(image=err_map, mode=cv2.RETR_TREE, method=cv2.CHAIN_APPROX_NONE)
+    cv2.drawContours(image=rgb_img, contours=contours, contourIdx=-1, color=(255, 0, 0), thickness=8, lineType=cv2.LINE_AA)
+                
+    # plot the results
+    if args.show:
+        fig, ax = plt.subplots(2, figsize=(16, 9))
+        ax[0].imshow(rgb_img) 
+        ax[1].imshow(err_map)
+        plt.show()
+    
+    return rgb_img 
 
 
 def main(args):
+
+    # make the save directory
+    SAVE_DIR.mkdir(exist_ok=True, parents=True)
 
     # load the model
     model = Autoencoder(bottlencek_dim=64)
@@ -114,14 +127,11 @@ def main(args):
     img_dir = Path(args.img_dir)
     for img_path in img_dir.glob("*.png"):
         img = np.array(Image.open(img_path))
-        gr_img = cv2.cvtColor(img, cv2.COLOR_BGR2GRAY) # to grayscale
-
-        err_map = process_image(model, gr_img, args)
+        result = process_image(model, img, args)
         
         # save the input and the result
-        Image.fromarray(img).save("orig.png")
-        Image.fromarray(err_map).save("err.png")
-        break # NOMERGE
+        save_path = SAVE_DIR / img_path.name 
+        Image.fromarray(result).save(save_path)
 
 
 if __name__ == "__main__":
@@ -130,7 +140,10 @@ if __name__ == "__main__":
     parser.add_argument("--model_path", type=str, default="/home/art/code/anomaly_detection/checkpoints/model_10.pth") 
     parser.add_argument("--size", type=int, default=128)
     parser.add_argument("--stride", type=int, default=64)
-    parser.add_argument("--err_threshold", type=float, default=0.8)
+    parser.add_argument("--err_threshold", type=float, default=0.7)
+    
+    # boolean flag to show the results
+    parser.add_argument("--show", action="store_true")
+    
     args = parser.parse_args()
-
     main(args)
