@@ -5,8 +5,6 @@ class Encoder(nn.Module):
     def __init__(self, bottlencek_dim=32):
         super(Encoder, self).__init__()
         self.model = nn.Sequential(
-            # nn.Conv2d(3, 32, kernel_size=3, stride=2, padding=1), # conv 0
-            # nn.LeakyReLU(negative_slope=0.2, inplace=True),
             nn.Conv2d(1, 32, kernel_size=4, stride=2, padding=1), # conv 1
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
             nn.Conv2d(32, 32, kernel_size=4, stride=2, padding=1), # conv 2
@@ -52,8 +50,6 @@ class Decoder(nn.Module):
             nn.ConvTranspose2d(32, 32, kernel_size=4, stride=2, padding=1), # conv 2d
             nn.LeakyReLU(negative_slope=0.2, inplace=True),
             nn.ConvTranspose2d(32, 1, kernel_size=4, stride=2, padding=1), # conv 1d
-            # nn.LeakyReLU(negative_slope=0.2, inplace=True),
-            # nn.ConvTranspose2d(32, 3, kernel_size=3, stride=1, padding=1), # conv 0d
         )
 
     def forward(self, x):
